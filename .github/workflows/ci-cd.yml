@@ -95,13 +95,14 @@ jobs:
             --cidr "$RUNNER_CIDR" || true
       - name: Préparer SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
           SSH_USER: ${{ secrets.SSH_USER }}
           FRONT_HOST: ${{ secrets.FRONT_HOST }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          printf '%s' "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keygen -y -f ~/.ssh/id_rsa >/dev/null
           ssh-keyscan -H "$FRONT_HOST" >> ~/.ssh/known_hosts
           cat > ~/.ssh/config <<EOF
           Host front
@@ -156,14 +157,15 @@ jobs:
             --cidr "$RUNNER_CIDR" || true
       - name: Préparer SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY_B64 }}
           SSH_USER: ${{ secrets.SSH_USER }}
           FRONT_HOST: ${{ secrets.FRONT_HOST }}
           BACK_PRIVATE_IP: ${{ secrets.BACK_PRIVATE_IP }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          printf '%s' "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keygen -y -f ~/.ssh/id_rsa >/dev/null
           ssh-keyscan -H "$FRONT_HOST" >> ~/.ssh/known_hosts
           cat > ~/.ssh/config <<EOF
           Host front
