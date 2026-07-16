@@ -77,6 +77,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Autoriser SSH depuis le runner
+        env:
+          FRONT_SECURITY_GROUP_ID: ${{ secrets.FRONT_SECURITY_GROUP_ID }}
+        run: |
+          RUNNER_CIDR="$(curl -fsS https://checkip.amazonaws.com)/32"
+          echo "RUNNER_CIDR=$RUNNER_CIDR" >> "$GITHUB_ENV"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$FRONT_SECURITY_GROUP_ID" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "$RUNNER_CIDR" || true
       - name: Préparer SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -105,6 +121,16 @@ jobs:
           scp deploy/deploy_front.sh front:/tmp/deploy_front.sh
           ssh front \
             "echo '$REGISTRY_PASSWORD' | docker login '$REGISTRY_HOST' -u '$REGISTRY_USERNAME' --password-stdin && chmod +x /tmp/deploy_front.sh && /tmp/deploy_front.sh '$IMAGE'"
+      - name: Retirer SSH du runner
+        if: always()
+        env:
+          FRONT_SECURITY_GROUP_ID: ${{ secrets.FRONT_SECURITY_GROUP_ID }}
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id "$FRONT_SECURITY_GROUP_ID" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "$RUNNER_CIDR" || true
 
   deploy-back:
     needs: [changes, build-back]
@@ -112,6 +138,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Autoriser SSH depuis le runner
+        env:
+          FRONT_SECURITY_GROUP_ID: ${{ secrets.FRONT_SECURITY_GROUP_ID }}
+        run: |
+          RUNNER_CIDR="$(curl -fsS https://checkip.amazonaws.com)/32"
+          echo "RUNNER_CIDR=$RUNNER_CIDR" >> "$GITHUB_ENV"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$FRONT_SECURITY_GROUP_ID" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "$RUNNER_CIDR" || true
       - name: Préparer SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -153,3 +195,13 @@ jobs:
           scp deploy/deploy_back.sh back:/tmp/deploy_back.sh
           ssh back \
             "echo '$REGISTRY_PASSWORD' | docker login '$REGISTRY_HOST' -u '$REGISTRY_USERNAME' --password-stdin && chmod +x /tmp/deploy_back.sh && DB_HOST='$DB_HOST' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' /tmp/deploy_back.sh '$IMAGE'"
+      - name: Retirer SSH du runner
+        if: always()
+        env:
+          FRONT_SECURITY_GROUP_ID: ${{ secrets.FRONT_SECURITY_GROUP_ID }}
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id "$FRONT_SECURITY_GROUP_ID" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "$RUNNER_CIDR" || true
