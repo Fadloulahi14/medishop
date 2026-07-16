@@ -31,7 +31,7 @@ jobs:
 
   build-front:
     needs: changes
-    if: needs.changes.outputs.front == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.front == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
 
   build-back:
     needs: changes
-    if: needs.changes.outputs.back == 'true'
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.back == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,7 +73,7 @@ jobs:
 
   deploy-front:
     needs: [changes, build-front]
-    if: always() && needs.changes.outputs.front == 'true' && needs.build-front.result == 'success'
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.front == 'true') && needs.build-front.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
 
   deploy-back:
     needs: [changes, build-back]
-    if: always() && needs.changes.outputs.back == 'true' && needs.build-back.result == 'success'
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.changes.outputs.back == 'true') && needs.build-back.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
