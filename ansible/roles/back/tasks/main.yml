@@ -1,0 +1,47 @@
+- name: Créer le répertoire de build backend
+  ansible.builtin.file:
+    path: "/opt/{{ project_name }}/backend/src"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copier les fichiers backend
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../backend/{{ item }}"
+    dest: "/opt/{{ project_name }}/backend/{{ item }}"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  loop:
+    - Dockerfile
+    - package.json
+    - package-lock.json
+    - .dockerignore
+
+- name: Copier le code backend
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../backend/src/"
+    dest: "/opt/{{ project_name }}/backend/src/"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Construire l'image backend localement
+  ansible.builtin.command:
+    cmd: docker build -t "{{ back_image }}" "/opt/{{ project_name }}/backend"
+  changed_when: true
+
+- name: Déployer le backend
+  community.docker.docker_container:
+    name: medishop-back
+    image: "{{ back_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["3000:3000"]
+    env:
+      DB_HOST: "{{ hostvars[groups['db'][0]].ansible_host }}"
+      DB_PORT: "5432"
+      DB_NAME: "{{ db_name }}"
+      DB_USER: "{{ db_user }}"
+      DB_PASSWORD: "{{ vault_db_password }}"
+      PORT: "3000"

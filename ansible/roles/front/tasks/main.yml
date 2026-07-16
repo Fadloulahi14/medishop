@@ -1,0 +1,67 @@
+- name: Installer Nginx et Certbot
+  ansible.builtin.apt:
+    name: [nginx, certbot, python3-certbot-nginx]
+    state: present
+
+- name: Créer le répertoire de build frontend
+  ansible.builtin.file:
+    path: "/opt/{{ project_name }}/frontend/src"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copier les fichiers frontend
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../frontend/{{ item }}"
+    dest: "/opt/{{ project_name }}/frontend/{{ item }}"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  loop:
+    - Dockerfile
+    - package.json
+    - package-lock.json
+    - index.html
+    - nginx.conf
+    - .dockerignore
+
+- name: Copier le code frontend
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../frontend/src/"
+    dest: "/opt/{{ project_name }}/frontend/src/"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Construire l'image frontend localement
+  ansible.builtin.command:
+    cmd: docker build -t "{{ front_image }}" "/opt/{{ project_name }}/frontend"
+  changed_when: true
+
+- name: Déployer le frontend
+  community.docker.docker_container:
+    name: medishop-front
+    image: "{{ front_image }}"
+    restart_policy: unless-stopped
+    published_ports: ["127.0.0.1:8080:80"]
+
+- name: Copier la configuration Nginx
+  ansible.builtin.template:
+    src: medishop.conf.j2
+    dest: /etc/nginx/sites-available/medishop.conf
+    mode: '0644'
+  notify: Recharger nginx
+
+- name: Activer le site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/medishop.conf
+    dest: /etc/nginx/sites-enabled/medishop.conf
+    state: link
+  notify: Recharger nginx
+
+- name: Désactiver le site par défaut
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Recharger nginx

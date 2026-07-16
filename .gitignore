@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+ansible/inventory.ini
+ansible/group_vars/all.yml
+ansible/group_vars/all/vault.yml
+*.pem
+.DS_Store

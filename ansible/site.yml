@@ -1,0 +1,19 @@
+- name: Base commune
+  hosts: all
+  become: true
+  roles: [common]
+
+- name: Base de données
+  hosts: db
+  become: true
+  roles: [db]
+
+- name: Backend
+  hosts: back
+  become: true
+  roles: [back]
+
+- name: Frontend et reverse proxy
+  hosts: front
+  become: true
+  roles: [front]

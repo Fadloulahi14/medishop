@@ -1,0 +1,12 @@
+{
+  "name": "medishop-todo-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": { "start": "node src/server.js" },
+  "dependencies": {
+    "cors": "latest",
+    "express": "latest",
+    "helmet": "latest",
+    "pg": "latest"
+  }
+}

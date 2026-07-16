@@ -1,0 +1,21 @@
+- name: Créer le volume PostgreSQL
+  community.docker.docker_volume:
+    name: medishop_db_data
+
+- name: Lancer PostgreSQL
+  community.docker.docker_container:
+    name: medishop-db
+    image: postgres:16-alpine
+    restart_policy: unless-stopped
+    published_ports: ["5432:5432"]
+    env:
+      POSTGRES_DB: "{{ db_name }}"
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_PASSWORD: "{{ vault_db_password }}"
+    volumes:
+      - medishop_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ db_user }} -d {{ db_name }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

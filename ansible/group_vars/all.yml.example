@@ -1,0 +1,12 @@
+project_name: medishop-todo
+domain_name: todo.example.com
+certbot_email: admin@example.com
+registry_host: docker.io
+registry_username: moncompte
+front_image: moncompte/medishop-front:latest
+back_image: moncompte/medishop-back:latest
+db_name: medishop
+db_user: medishop
+# Secrets provenant de vault.yml
+# vault_db_password
+# vault_registry_password

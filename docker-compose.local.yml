@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: medishop
+      POSTGRES_USER: medishop
+      POSTGRES_PASSWORD: medishop_dev
+    volumes: ["db_data:/var/lib/postgresql/data"]
+    ports: ["5432:5432"]
+  back:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_NAME: medishop
+      DB_USER: medishop
+      DB_PASSWORD: medishop_dev
+    depends_on: [db]
+    ports: ["3000:3000"]
+  front:
+    build: ./frontend
+    depends_on: [back]
+    ports: ["8080:80"]
+volumes:
+  db_data:

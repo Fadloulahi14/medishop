@@ -1,0 +1,7 @@
+aws_region          = "eu-west-3"
+availability_zone   = "eu-west-3a"
+key_name             = "ma-cle-ec2"
+admin_cidr           = "203.0.113.10/32"
+instance_type        = "t3.micro"
+enable_nat_gateway   = true
+associate_front_eip  = false
